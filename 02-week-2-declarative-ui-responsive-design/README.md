@@ -3,7 +3,7 @@
 ## Dokumentasi dashboard responsive
 
 ### Hasil 
-* ![Layar Sempit Light](Screenshot/hasil warm up.jpeg) |
+* ![Layar Sempit Light](Screenshot/hasil_warm_up.jpeg) |
 
 ## Tugas Utama
 
@@ -35,7 +35,6 @@
     ),
   ],
  )
-* 
 #### 3. Verification Prompt (Self-Audit)
 * **Responsivitas** (< 600px): Aman. Di bawah breakpoint 700px (termasuk layar 360px–480px), layout otomatis beralih menjadi 1 kolom vertikal sehingga tidak ada elemen yang berhimpitan.
 * **Aksesibilitas**: Aman dan meningkat. Semua elemen penting (CupertinoSwitch, InfoCard, ProfileHeaderCard) dibungkus dengan widget Semantics agar dapat dibaca dengan jelas oleh screen reader (TalkBack/VoiceOver).
