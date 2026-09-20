@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/providers/stats_provider.dart'; 
+import 'package:week3/providers/stats_provider.dart'; 
 
 void main() {
   group('StatsNotifier Unit Test', () {

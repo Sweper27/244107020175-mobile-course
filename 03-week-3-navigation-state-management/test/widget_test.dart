@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/pages/todo_page.dart'; // Sesuaikan nama package Anda
+import 'package:week3/pages/todo_page.dart'; // Sesuaikan nama package Anda
 
 void main() {
   testWidgets('menambah tugas baru', (tester) async {
