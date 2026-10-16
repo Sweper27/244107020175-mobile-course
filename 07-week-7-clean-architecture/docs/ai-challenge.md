@@ -1,105 +1,93 @@
-# AI Challenge — Jobsheet 6
+# AI Prompt Challenge — Jobsheet 7: Clean Architecture
 
-## 1. Prompt yang Digunakan
+Dokumen ini mencatat interaksi dengan AI Coding Assistant, perbandingan usulan arsitektur awal versus keputusan final, serta justifikasi teknis dan analisis trade-off sesuai panduan modul praktikum.
 
-Prompt lengkap diberikan kepada AI assistant untuk mengimplementasikan seluruh bagian Jobsheet Week 6: Authentication, Security & FCM. Prompt mencakup 26 bagian detail meliputi:
+---
 
-- Mock Authentication dengan credential `mahasiswa@kampus.ac.id` / `123456`
-- Secure Storage menggunakan `flutter_secure_storage`
-- Dio API Client dengan interceptor untuk auto token dan 401 refresh
-- Riverpod Auth State dengan `AsyncNotifier`
-- GoRouter route guard
-- Login Page, Home Page, Announcement Page
-- Firebase Cloud Messaging (FCM) setup
-- Foreground, Background, dan Terminated notification handling
-- Notification click navigation ke `/pengumuman/:id`
-- Unit testing
-- Dokumentasi
+## 1. Prompt AI yang Digunakan
 
-## 2. Fitur yang Diminta
+Berikut adalah prompt resmi yang diajukan ke AI Coding Assistant:
 
-| No | Fitur |
-|----|-------|
-| 1  | Mock Authentication (login/logout) |
-| 2  | Secure Storage (access token & refresh token) |
-| 3  | Dio Interceptor (auto token attach, 401 refresh) |
-| 4  | Riverpod state management (auth state) |
-| 5  | GoRouter route guard (redirect auth) |
-| 6  | Login Page dengan loading & error handling |
-| 7  | Home Page dengan logout |
-| 8  | Announcement Page (dari notification) |
-| 9  | Firebase Cloud Messaging setup |
-| 10 | Foreground notification (local notification) |
-| 11 | Background notification handler |
-| 12 | Terminated state notification |
-| 13 | Notification click → navigation |
-| 14 | Unit test minimal |
-| 15 | README dokumentasi |
-
-## 3. Hasil Implementasi
-
-Semua 15 fitur berhasil diimplementasikan oleh AI:
-
-- **Data layer**: `token_store.dart`, `auth_repository.dart`, `api_client.dart`
-- **State management**: `auth_provider.dart` menggunakan Riverpod `AsyncNotifier`
-- **Routing**: `app_router.dart` dengan GoRouter + route guard
-- **Pages**: `login_page.dart`, `home_page.dart`, `announcement_page.dart`
-- **Services**: `notification_service.dart` menangani FCM + local notification
-- **Android config**: build.gradle.kts, AndroidManifest.xml, settings.gradle.kts
-- **Firebase**: Dikonfigurasi menggunakan FlutterFire CLI
-- **Tests**: Unit test untuk token store, auth repository, notification payload, routes
-
-## 4. Perubahan yang Dilakukan AI
-
-| File | Aksi |
-|------|------|
-| `pubspec.yaml` | Ditambahkan semua dependency |
-| `lib/main.dart` | Entry point dengan Firebase init & notification setup |
-| `lib/data/token_store.dart` | Baru — secure token storage |
-| `lib/data/auth_repository.dart` | Baru — mock auth |
-| `lib/data/api_client.dart` | Baru — Dio + interceptor |
-| `lib/providers/auth_provider.dart` | Baru — Riverpod auth state |
-| `lib/router/app_router.dart` | Baru — GoRouter + guard |
-| `lib/pages/login_page.dart` | Baru — login UI |
-| `lib/pages/home_page.dart` | Baru — home UI |
-| `lib/pages/announcement_page.dart` | Baru — pengumuman detail |
-| `lib/services/notification_service.dart` | Baru — FCM & local notification |
-| `android/app/build.gradle.kts` | Updated — desugaring, Google Services |
-| `android/settings.gradle.kts` | Updated — Google Services plugin |
-| `android/app/src/main/AndroidManifest.xml` | Updated — permission, FCM channel |
-| `test/auth_test.dart` | Baru — unit tests |
-| `README.md` | Baru — dokumentasi |
-| `docs/ai-challenge.md` | Baru — dokumen ini |
-
-## 5. Perbaikan Manual
-
-Hal-hal yang mungkin perlu disesuaikan secara manual:
-
-1. **Firebase Configuration** — Jika `flutterfire configure` belum dijalankan, perlu dijalankan manual.
-2. **google-services.json** — Harus ada di `android/app/`.
-3. **firebase_options.dart** — Harus di-generate oleh FlutterFire CLI.
-4. **Testing FCM** — Membutuhkan Firebase Console untuk mengirim test notification.
-5. **Identitas di README** — Nama, NIM, dan Kelas perlu diisi manual.
-
-## 6. Testing
-
-### Unit Test
-```bash
-flutter test
+```text
+Project Flutter saya: campus_notify (auth + FCM + daftar pengumuman).
+Kondisi kini: folder lib/{data, providers, pages, services},
+repository tercampur dengan implementasi, widget memanggil Dio langsung / data mock di UI.
+Tugas:
+1. Usulkan struktur feature-first Clean Architecture
+   (presentation/domain/data) untuk fitur auth + announcements.
+2. Untuk tiap file lama, sebutkan tujuan barunya (pindah/pecah/hapus).
+3. Tandai bagian yang over-engineering bila diterapkan ke CRUD sederhana,
+   dan kapan use case benar-benar dibutuhkan vs repository langsung.
+4. Tunjukkan wiring DI dengan Riverpod (tanpa package DI tambahan).
+Jelaskan trade-off setiap keputusan.
 ```
 
-### Manual Test Checklist
-- [ ] Login dengan credential benar → masuk Home
-- [ ] Login dengan credential salah → error message
-- [ ] Logout → kembali ke Login
-- [ ] Route guard: akses `/` tanpa login → redirect `/login`
-- [ ] Route guard: akses `/login` saat sudah login → redirect `/`
-- [ ] FCM Token diperoleh (cek log)
-- [ ] Foreground notification → tampil di tray
-- [ ] Background notification → tampil di tray, klik → `/pengumuman/3`
-- [ ] Terminated notification → klik → buka app → `/pengumuman/3`
+---
 
-## 7. Hasil Akhir
+## 2. Ringkasan Usulan Awal AI
 
-Project berhasil diimplementasikan dengan seluruh fitur Jobsheet 6. Kode bersih, terstruktur sesuai konsep codelab, dan siap untuk pengujian di perangkat Android fisik.
+AI mengusulkan:
+1. Pemisahan menyeluruh ke dalam struktur **feature-first**: `lib/features/auth` dan `lib/features/announcements`.
+2. Pembuatan tiga layer lengkap pada masing-masing fitur: `domain`, `data`, dan `presentation`.
+3. Pembuatan class UseCase granular untuk setiap method repository:
+   - `LoginUseCase`
+   - `LogoutUseCase`
+   - `CheckAuthStatusUseCase`
+   - `RefreshTokenUseCase`
+   - `GetAnnouncementByIdUseCase`
+   - `GetAnnouncementsUseCase`
+4. Penggunaan package fungsional eksternal seperti `fpdart` atau `dartz` (`Either<Failure, T>`) untuk membungkus hasil operasi domain.
+5. Pembuatan class Service Locator manual via `get_it` di samping Riverpod.
 
+---
+
+## 3. Tabel Usulan Awal vs Keputusan Final
+
+| Komponen / Masalah | Usulan Awal AI | Keputusan Final Mahasiswa | Alasan Teknis & Trade-off |
+| :--- | :--- | :--- | :--- |
+| **Pola Error Handling** | Menggunakan library eksternal `fpdart` (`Either<Failure, T>`). | Menggunakan **Dart Records murni** bertipe `({T? data, Failure? failure})`. | Menghindari dependensi pihak ketiga baru (`pubspec.yaml` tetap ramping), sintaks bawaan Dart 3 lebih bersih dan mudah dipahami mahasiswa. |
+| **Granularitas Use Case** | Membuat use case terpisah untuk setiap method, termasuk `RefreshTokenUseCase` satu baris. | Menyederhanakan `RefreshToken` langsung ditangani di batas data / interceptor HTTP, sedangkan use case difokuskan pada operasi utama: `LoginUseCase`, `LogoutUseCase`, `CheckAuthStatusUseCase`, `GetAnnouncementById`, dan `GetAnnouncements`. | Membuat use case terpisah untuk refresh token yang hanya berupa delegasi satu baris ke repository adalah **over-engineering** (boilerplate tanpa nilai bisnis). Use case utama yang butuh validasi atau orkestrasi tetap dibuat. |
+| **Dependency Injection** | Menggunakan `get_it` + `Injectable` bersamaan dengan Riverpod. | **Murni Riverpod Provider** (`Provider<Repo>`, `Provider<UseCase>`, `AsyncNotifier`). | Menolak dependensi ganda. Riverpod sudah merupakan container DI hierarkis yang reaktif, mendukung scoping, dan sangat mudah di-override saat testing menggunakan `ProviderContainer(overrides: [...])`. |
+| **Letak Interface Repository** | Sempat disarankan digabung di `data/repositories/` dengan nama `auth_repository.dart`. | **Dipisahkan tegas**: Interface di `domain/repositories/`, implementasi konkrit di `data/repositories/`. | Aturan dependensi wajib: Domain adalah inti bisnis dan tidak boleh mengimpor layer Data. Pemisahan ini memungkinkan Domain diuji murni tanpa ketergantungan pada SQLite, Dio, atau secure storage. |
+| **Mapping JSON & SQLite** | Diletakkan di dalam Entity agar praktis. | **Entity murni Dart tanpa `toMap`/`fromJson`**. Seluruh mapping ditempatkan di `data/models/`. | Mencegah kebocoran struktur data luar (skema JSON backend / database) ke dalam domain core logic. |
+| **Integrasi Firebase Messaging** | Memindahkan FCM ke dalam domain sebagai UseCase. | FCM tetap diisolasi di `lib/services/` dan dipanggil di Presentation (`main.dart`), tanpa mengontaminasi Domain. | Domain harus steril dari SDK Flutter dan vendor luar seperti Firebase. Notifikasi adalah concern infrastruktur/presentasi sistem operasi. |
+
+---
+
+## 4. Alasan Teknis & Analisis Kapan Use Case Dibutuhkan
+
+### Kapan Use Case Benar-Benar Dibutuhkan?
+1. **Validasi & Business Rules**: Ketika ada aturan bisnis sebelum mengakses sumber data (misalnya validasi format email, sanitasi string ID, pemeriksaan kredensial kosong).
+2. **Orkestrasi Multi-Repository**: Ketika satu tindakan pengguna memerlukan koordinasi data dari beberapa repository (misal: ambil profil pengguna lalu sinkronkan dengan data catatan offline).
+3. **Caching & Policy Logic**: Memutuskan apakah harus mengambil dari cache lokal atau query jaringan.
+
+### Kapan Repository Langsung ke Notifier Cukup?
+1. Operasi CRUD sederhana satu baris (misal: query data tanpa transformasi atau parameter kompleks).
+2. Menghindari layer passthrough tanpa logika (*boilerplate bloat*): membuat file 5 baris hanya untuk meneruskan argumen ke repository tanpa transformasi apa pun menambah beban pemeliharaan pada tim kecil.
+
+---
+
+## 5. Wiring Dependency Injection dengan Riverpod
+
+Seluruh dependensi disuntikkan secara terarah melalui Provider Riverpod tanpa dependensi eksternal:
+
+```dart
+// 1. Data Layer: Data Source & Concrete Repository
+final tokenStoreProvider = Provider<TokenStore>((ref) => TokenStore());
+
+final authRepositoryProvider = Provider<AuthRepository>((ref) {
+  return AuthRepositoryImpl(tokenStore: ref.watch(tokenStoreProvider));
+});
+
+// 2. Domain Layer: Use Case menerima kontrak abstraksi
+final loginUseCaseProvider = Provider<LoginUseCase>((ref) {
+  return LoginUseCase(ref.watch(authRepositoryProvider));
+});
+
+// 3. Presentation Layer: State Notifier hanya memanggil Use Case
+final authProvider = AsyncNotifierProvider<AuthNotifier, AuthStatus>(
+  AuthNotifier.new,
+);
+```
+
+Dengan pola ini, saat pengujian unit test UI maupun use case, kita dapat meng-override provider repository menggunakan fake repository dengan sangat bersih.

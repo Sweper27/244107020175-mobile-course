@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -24,7 +26,6 @@ class NotificationService {
     importance: Importance.high,
   );
 
-
   Future<void> initialize() async {
     if (_initialized) return;
     _initialized = true;
@@ -35,12 +36,14 @@ class NotificationService {
     // Create Android notification channel
     await _localNotifications
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(_channel);
 
     // Initialize local notifications
-    const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
 
     const initSettings = InitializationSettings(android: androidSettings);
 
@@ -74,10 +77,12 @@ class NotificationService {
         provisional: false,
       );
 
-      print(
-          '[Notification] Permission status: ${settings.authorizationStatus}');
+      developer.log(
+        'Permission status: ${settings.authorizationStatus}',
+        name: 'Notification',
+      );
     } catch (e) {
-      print('[Notification] Permission request failed: $e');
+      developer.log('Permission request failed: $e', name: 'Notification');
     }
   }
 
@@ -86,21 +91,21 @@ class NotificationService {
     try {
       final token = await _messaging.getToken();
       if (token != null) {
-        // Log only partial token for security
-        final partial =
-            token.length > 20 ? '${token.substring(0, 20)}...' : token;
-        print('[FCM] Token (partial): $partial');
+        final partial = token.length > 20
+            ? '${token.substring(0, 20)}...'
+            : token;
+        developer.log('Token (partial): $partial', name: 'FCM');
       } else {
-        print('[FCM] Token is null');
+        developer.log('Token is null', name: 'FCM');
       }
     } catch (e) {
-      print('[FCM] Failed to get token: $e');
+      developer.log('Failed to get token: $e', name: 'FCM');
     }
   }
 
   /// Handles foreground FCM messages by showing a local notification.
   void _handleForegroundMessage(RemoteMessage message) {
-    print('[FCM] Foreground message received');
+    developer.log('Foreground message received', name: 'FCM');
 
     final notification = message.notification;
     if (notification == null) return;
@@ -127,7 +132,7 @@ class NotificationService {
 
   /// Handles notification tap when app was in background.
   void _handleMessageOpenedApp(RemoteMessage message) {
-    print('[FCM] Message opened app');
+    developer.log('Message opened app', name: 'FCM');
     final announcementId = message.data['announcementId'];
     if (announcementId != null && onNotificationTap != null) {
       onNotificationTap!(announcementId);
@@ -142,4 +147,3 @@ class NotificationService {
     }
   }
 }
-

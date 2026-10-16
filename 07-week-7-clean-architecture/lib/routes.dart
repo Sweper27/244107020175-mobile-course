@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../providers/auth_provider.dart';
-import '../pages/login_page.dart';
-import '../pages/home_page.dart';
-import '../pages/announcement_page.dart';
 
+import 'core/format.dart';
+import 'features/announcements/presentation/pages/announcement_page.dart';
+import 'features/auth/presentation/pages/home_page.dart';
+import 'features/auth/presentation/pages/login_page.dart';
+import 'features/auth/presentation/providers/auth_providers.dart';
 
+/// App router provider using GoRouter.
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
 
@@ -18,7 +20,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLoading = authState.isLoading;
       final currentPath = state.matchedLocation;
 
-      // While loading, don't redirect
+      // While loading initial auth state, don't redirect
       if (isLoading || status == null || status == AuthStatus.unknown) {
         return null;
       }
@@ -39,18 +41,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginPage(),
-      ),
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const HomePage(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
+      GoRoute(path: '/', builder: (context, state) => const HomePage()),
       GoRoute(
         path: '/pengumuman/:id',
         builder: (context, state) {
-          final id = state.pathParameters['id'] ?? '0';
+          final rawId = state.pathParameters['id'];
+          final id = parseAnnouncementId(rawId);
           return AnnouncementPage(id: id);
         },
       ),
@@ -58,11 +55,9 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
-/// A ChangeNotifier that rebuilds when the auth state changes,
-/// triggering GoRouter's redirect logic.
+/// A ChangeNotifier that triggers GoRouter redirect when auth state changes.
 class _AuthRefreshListenable extends ChangeNotifier {
   _AuthRefreshListenable(Ref ref) {
-    // Listen to auth state changes
     ref.listen(authProvider, (previous, next) {
       notifyListeners();
     });

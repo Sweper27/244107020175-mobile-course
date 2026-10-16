@@ -1,16 +1,16 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-
+/// Secure token storage wrapping FlutterSecureStorage.
+/// Belongs strictly to the Data layer.
 class TokenStore {
   TokenStore({FlutterSecureStorage? storage})
-      : _storage = storage ?? const FlutterSecureStorage();
+    : _storage = storage ?? const FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
 
   static const _accessTokenKey = 'access_token';
   static const _refreshTokenKey = 'refresh_token';
 
- 
   Future<void> save({
     required String accessToken,
     required String refreshToken,
@@ -19,11 +19,9 @@ class TokenStore {
     await _storage.write(key: _refreshTokenKey, value: refreshToken);
   }
 
-
   Future<String?> readAccess() async {
     return _storage.read(key: _accessTokenKey);
   }
-
 
   Future<String?> readRefresh() async {
     return _storage.read(key: _refreshTokenKey);
@@ -35,4 +33,3 @@ class TokenStore {
     await _storage.delete(key: _refreshTokenKey);
   }
 }
-

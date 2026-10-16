@@ -1,11 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:campus_notification/data/token_store.dart';
-import 'package:campus_notification/data/auth_repository.dart';
+import 'package:campus_notification/features/auth/data/datasources/token_store.dart';
+import 'package:campus_notification/features/auth/data/repositories/auth_repository_impl.dart';
 
 /// A simple in-memory token store for testing.
-///
-/// Instead of faking FlutterSecureStorage (which has a complex interface),
-/// we create a test-friendly TokenStore subclass with in-memory storage.
 class FakeTokenStore extends TokenStore {
   FakeTokenStore() : super();
 
@@ -39,11 +36,11 @@ class FakeTokenStore extends TokenStore {
 
 void main() {
   late FakeTokenStore tokenStore;
-  late AuthRepository authRepo;
+  late AuthRepositoryImpl authRepo;
 
   setUp(() {
     tokenStore = FakeTokenStore();
-    authRepo = AuthRepository(tokenStore: tokenStore);
+    authRepo = AuthRepositoryImpl(tokenStore: tokenStore);
   });
 
   // --- Token Store Tests ---
@@ -84,68 +81,83 @@ void main() {
 
   group('AuthRepository', () {
     test('5. login succeeds with correct credentials', () async {
-      final result =
-          await authRepo.login('mahasiswa@kampus.ac.id', '123456');
+      final result = await authRepo.login(
+        email: 'mahasiswa@kampus.ac.id',
+        password: '123456',
+      );
 
-      expect(result, true);
+      expect(result.failure, isNull);
+      expect(result.user, isNotNull);
+      expect(result.user!.email, 'mahasiswa@kampus.ac.id');
       expect(await tokenStore.readAccess(), isNotNull);
       expect(await tokenStore.readRefresh(), isNotNull);
     });
 
     test('6. login fails with wrong email', () async {
-      final result =
-          await authRepo.login('wrong@email.com', '123456');
+      final result = await authRepo.login(
+        email: 'wrong@email.com',
+        password: '123456',
+      );
 
-      expect(result, false);
+      expect(result.user, isNull);
+      expect(result.failure, isNotNull);
       expect(await tokenStore.readAccess(), isNull);
     });
 
     test('7. login fails with wrong password', () async {
-      final result =
-          await authRepo.login('mahasiswa@kampus.ac.id', 'wrong');
+      final result = await authRepo.login(
+        email: 'mahasiswa@kampus.ac.id',
+        password: 'wrong',
+      );
 
-      expect(result, false);
+      expect(result.user, isNull);
+      expect(result.failure, isNotNull);
       expect(await tokenStore.readAccess(), isNull);
     });
 
     test('8. logout clears all tokens', () async {
-      await authRepo.login('mahasiswa@kampus.ac.id', '123456');
+      await authRepo.login(email: 'mahasiswa@kampus.ac.id', password: '123456');
       expect(await tokenStore.readAccess(), isNotNull);
 
-      await authRepo.logout();
+      final result = await authRepo.logout();
+      expect(result.success, true);
       expect(await tokenStore.readAccess(), isNull);
       expect(await tokenStore.readRefresh(), isNull);
     });
 
     test('9. isLoggedIn returns true after login', () async {
-      await authRepo.login('mahasiswa@kampus.ac.id', '123456');
-      expect(await authRepo.isLoggedIn(), true);
+      await authRepo.login(email: 'mahasiswa@kampus.ac.id', password: '123456');
+      final result = await authRepo.isLoggedIn();
+      expect(result.isLoggedIn, true);
     });
 
     test('10. isLoggedIn returns false when not logged in', () async {
-      expect(await authRepo.isLoggedIn(), false);
+      final result = await authRepo.isLoggedIn();
+      expect(result.isLoggedIn, false);
     });
 
     test('11. isLoggedIn returns false after logout', () async {
-      await authRepo.login('mahasiswa@kampus.ac.id', '123456');
+      await authRepo.login(email: 'mahasiswa@kampus.ac.id', password: '123456');
       await authRepo.logout();
-      expect(await authRepo.isLoggedIn(), false);
+      final result = await authRepo.isLoggedIn();
+      expect(result.isLoggedIn, false);
     });
 
     test('12. refresh succeeds when refresh token exists', () async {
-      await authRepo.login('mahasiswa@kampus.ac.id', '123456');
+      await authRepo.login(email: 'mahasiswa@kampus.ac.id', password: '123456');
       final oldAccess = await tokenStore.readAccess();
 
-      final result = await authRepo.refresh();
+      final result = await authRepo.refreshToken();
 
-      expect(result, true);
+      expect(result.refreshed, true);
       final newAccess = await tokenStore.readAccess();
       expect(newAccess, isNot(equals(oldAccess)));
     });
 
     test('13. refresh fails when no refresh token (empty store)', () async {
-      final result = await authRepo.refresh();
-      expect(result, false);
+      final result = await authRepo.refreshToken();
+      expect(result.refreshed, false);
+      expect(result.failure, isNotNull);
     });
   });
 
@@ -181,4 +193,3 @@ void main() {
     });
   });
 }
-

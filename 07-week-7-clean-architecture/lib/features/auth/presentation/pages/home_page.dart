@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/auth_provider.dart';
 
-/// Home page displayed after successful authentication.
+import '../providers/auth_providers.dart';
+
+/// Clean Architecture Home page displayed after successful authentication.
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
@@ -36,18 +37,12 @@ class HomePage extends ConsumerWidget {
               const SizedBox(height: 24),
               const Text(
                 'Selamat datang!',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               const Text(
                 'Anda berhasil login.',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
               const SizedBox(height: 40),
               SizedBox(
@@ -75,4 +70,3 @@ class HomePage extends ConsumerWidget {
     );
   }
 }
-

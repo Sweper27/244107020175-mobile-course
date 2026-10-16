@@ -1,26 +1,34 @@
+import 'dart:developer' as developer;
+
 import 'package:dio/dio.dart';
+
+import '../../domain/repositories/auth_repository.dart';
 import 'token_store.dart';
-import 'auth_repository.dart';
 
-
+/// Dio HTTP client with automatic Authorization header injection
+/// and token refresh interceptor.
 class ApiClient {
   ApiClient({
     required this.tokenStore,
     required this.authRepository,
     required this.onSessionExpired,
   }) {
-    _dio = Dio(BaseOptions(
-      baseUrl: 'https://mock-api.example.com',
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-    ));
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: 'https://mock-api.example.com',
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
+      ),
+    );
 
-    _dio.interceptors.add(_AuthInterceptor(
-      tokenStore: tokenStore,
-      authRepository: authRepository,
-      onSessionExpired: onSessionExpired,
-      dio: _dio,
-    ));
+    _dio.interceptors.add(
+      _AuthInterceptor(
+        tokenStore: tokenStore,
+        authRepository: authRepository,
+        onSessionExpired: onSessionExpired,
+        dio: _dio,
+      ),
+    );
   }
 
   final TokenStore tokenStore;
@@ -31,7 +39,6 @@ class ApiClient {
 
   Dio get dio => _dio;
 }
-
 
 class _AuthInterceptor extends Interceptor {
   _AuthInterceptor({
@@ -69,10 +76,10 @@ class _AuthInterceptor extends Interceptor {
       _isRefreshing = true;
 
       try {
-        final refreshed = await authRepository.refresh();
+        final result = await authRepository.refreshToken();
 
-        if (refreshed) {
-          // Retry the original request with the new token
+        if (result.refreshed) {
+          // Retry original request with new token
           final newAccessToken = await tokenStore.readAccess();
           final options = err.requestOptions;
           options.headers['Authorization'] = 'Bearer $newAccessToken';
@@ -81,13 +88,17 @@ class _AuthInterceptor extends Interceptor {
           _isRefreshing = false;
           return handler.resolve(response);
         } else {
-          // Refresh failed — session expired
           _isRefreshing = false;
+          developer.log(
+            'Session expired, triggering logout callback',
+            name: 'ApiClient',
+          );
           await onSessionExpired();
           return handler.reject(err);
         }
       } catch (e) {
         _isRefreshing = false;
+        developer.log('Error refreshing token: $e', name: 'ApiClient');
         await onSessionExpired();
         return handler.reject(err);
       }
@@ -96,4 +107,3 @@ class _AuthInterceptor extends Interceptor {
     handler.next(err);
   }
 }
-

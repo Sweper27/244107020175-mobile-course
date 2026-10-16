@@ -1,18 +1,19 @@
+import 'dart:developer' as developer;
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'firebase_options.dart';
-import 'router/app_router.dart';
+import 'routes.dart';
 import 'services/notification_service.dart';
 
-/// Top-level background message handler.
-///
-/// Must be a top-level function (not a class method) for Firebase Messaging.
+/// Top-level background message handler for FCM.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  print('[FCM] Background message: ${message.messageId}');
+  developer.log('Background message: ${message.messageId}', name: 'FCM');
 }
 
 Future<void> main() async {
@@ -38,8 +39,7 @@ class CampusNotificationApp extends ConsumerStatefulWidget {
       _CampusNotificationAppState();
 }
 
-class _CampusNotificationAppState
-    extends ConsumerState<CampusNotificationApp> {
+class _CampusNotificationAppState extends ConsumerState<CampusNotificationApp> {
   @override
   void initState() {
     super.initState();
@@ -61,7 +61,6 @@ class _CampusNotificationAppState
     if (initialMessage != null) {
       final announcementId = initialMessage.data['announcementId'];
       if (announcementId != null) {
-        // Delay navigation to ensure router is ready
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final router = ref.read(routerProvider);
           router.push('/pengumuman/$announcementId');
@@ -77,10 +76,7 @@ class _CampusNotificationAppState
     return MaterialApp.router(
       title: 'Campus Notification',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorSchemeSeed: Colors.blue,
-        useMaterial3: true,
-      ),
+      theme: ThemeData(colorSchemeSeed: Colors.blue, useMaterial3: true),
       routerConfig: router,
     );
   }

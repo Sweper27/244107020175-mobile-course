@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/auth_provider.dart';
 
-/// Login page with email/password fields and mock authentication.
+import '../providers/auth_providers.dart';
+
+/// Clean Architecture Login page with form validation and Riverpod auth integration.
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
@@ -11,7 +12,9 @@ class LoginPage extends ConsumerStatefulWidget {
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
-  final _emailController = TextEditingController(text: 'mahasiswa@kampus.ac.id');
+  final _emailController = TextEditingController(
+    text: 'mahasiswa@kampus.ac.id',
+  );
   final _passwordController = TextEditingController(text: '123456');
   final _formKey = GlobalKey<FormState>();
 
@@ -25,10 +28,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
-    await ref.read(authProvider.notifier).login(
-          _emailController.text.trim(),
-          _passwordController.text.trim(),
-        );
+    await ref
+        .read(authProvider.notifier)
+        .login(_emailController.text.trim(), _passwordController.text.trim());
   }
 
   @override
@@ -36,14 +38,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final authState = ref.watch(authProvider);
     final isLoading = authState.isLoading;
 
-    // Show error SnackBar on auth error
+    // Show error SnackBar on auth failure
     ref.listen(authProvider, (previous, next) {
       if (next.hasError) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              next.error.toString().replaceAll('Exception: ', ''),
-            ),
+            content: Text(next.error.toString().replaceAll('Exception: ', '')),
             backgroundColor: Colors.red,
           ),
         );
@@ -60,35 +60,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // App icon
                 const Icon(
                   Icons.notifications_active,
                   size: 80,
                   color: Colors.blue,
                 ),
                 const SizedBox(height: 16),
-
-                // Title
                 const Text(
                   'Campus Notification',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 const Text(
                   'Silakan login untuk melanjutkan',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
                 ),
                 const SizedBox(height: 40),
-
-                // Email field
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -98,15 +87,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Email tidak boleh kosong';
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 16),
-
-                // Password field
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
@@ -116,15 +103,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Password tidak boleh kosong';
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 24),
-
-                // Login button
                 SizedBox(
                   height: 48,
                   child: ElevatedButton(
@@ -145,10 +130,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text(
-                            'Login',
-                            style: TextStyle(fontSize: 16),
-                          ),
+                        : const Text('Login', style: TextStyle(fontSize: 16)),
                   ),
                 ),
               ],
@@ -159,4 +141,3 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 }
-
