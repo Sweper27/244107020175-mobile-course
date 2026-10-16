@@ -53,10 +53,10 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAEcY4bW4xvFAJD2NtAnSSbeO3qF9uDf-0',
-    appId: '1:14353542303:android:2d8594d10f3ebeb66846aa',
-    messagingSenderId: '14353542303',
-    projectId: 'campus-notification-1edaf',
-    storageBucket: 'campus-notification-1edaf.firebasestorage.app',
+    apiKey: '',
+    appId: '',
+    messagingSenderId: '',
+    projectId: '',
+    storageBucket: '',
   );
 }

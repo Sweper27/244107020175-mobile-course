@@ -11,9 +11,6 @@ Laporan Praktikum Pemrograman Mobile: Implementasi Arsitektur Bersih (*Clean Arc
 | **Nama** | Rifqi Aries Saputra |
 | **NIM** | 244107020175 |
 | **Kelas** | TI-3H |
-| **Program Studi** | D-IV Teknik Informatika |
-| **Mata Kuliah** | Pemrograman Mobile |
-| **Repositori** | `244107020175-mobile-course` |
 
 ---
 
@@ -29,7 +26,7 @@ Setelah menyelesaikan praktikum ini, mahasiswa mampu:
 
 ---
 
-## 7. Fitur yang Berhasil Direfactor
+## 3. Fitur yang Berhasil Direfactor
 
 1. **Fitur Autentikasi (`features/auth/`)**:
    - Pemisahan `AuthRepository` interface (Domain) dan `AuthRepositoryImpl` (Data).
@@ -48,30 +45,34 @@ Setelah menyelesaikan praktikum ini, mahasiswa mampu:
 ---
 
 
-### 2. Menjalankan Static Analysis
+## 4. Menjalankan Static Analysis
 ```bash
 flutter analyze
 ```
-*Hasil: `No issues found!`*
+*Hasil: <img src="screenshots/analyze.png" width= "300">
 
 ### 3. Menjalankan Unit Tests
 ```bash
 flutter test
 ```
-*Hasil: `All 31 tests passed!`*
+*Hasil: <img src="screenshots/test.png" width= "300">
 
 ---
 
 
-## 11. Daftar Screenshot yang Perlu Diambil
+## 5. Daftar Screenshot yang Perlu Diambil
 
 <img src="screenshots/home.jpeg" width= "300">
 
 <img src="screenshots/Login.jpeg" width= "300">
 
+<img src="screenshots/notifikasi.jpeg" width= "300">
+
+<img src="screenshots/pengumuman.jpeg" width= "300">
+
 ---
 
-## 12. Kesimpulan dan Refleksi
+## 6. Kesimpulan dan Refleksi
 
 ### 1. Mengapa interface repository harus tinggal di domain, bukan di data? Apa yang rusak bila dibalik?
 Interface repository adalah kontrak kebutuhan bisnis aplikasi. Bila interface ditaruh di layer Data, maka Domain harus mengimpor layer Data untuk membaca kontrak tersebut. Hal ini melanggar *Dependency Inversion Principle* (DIP) dan *Dependency Rule*, di mana dependensi berbalik keluar. Akibatnya:
