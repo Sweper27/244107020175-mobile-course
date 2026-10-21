@@ -16,9 +16,12 @@ String parseAnnouncementId(String? rawId) {
   return rawId.trim();
 }
 
-/// Validates email format using basic regex.
+/// Memvalidasi format email menggunakan pola dasar.
 bool isValidEmail(String email) {
-  final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+  final emailRegex = RegExp(
+    r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$",
+  );
+
   return emailRegex.hasMatch(email.trim());
 }
 
