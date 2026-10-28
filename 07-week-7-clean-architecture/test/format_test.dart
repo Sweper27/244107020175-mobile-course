@@ -23,7 +23,14 @@ void main() {
     test('3. isValidEmail memvalidasi format email', () {
       expect(isValidEmail('mahasiswa@kampus.ac.id'), isTrue);
       expect(isValidEmail('admin@test.com'), isTrue);
+
+      // Menguji domain dengan akhiran lebih dari empat karakter.
+      expect(isValidEmail('admin@museum'), isFalse);
+      expect(isValidEmail('admin@example.museum'), isTrue);
+
+      // Menguji input email yang tidak valid.
       expect(isValidEmail('bukan-email'), isFalse);
+      expect(isValidEmail('admin@'), isFalse);
       expect(isValidEmail(''), isFalse);
     });
 
