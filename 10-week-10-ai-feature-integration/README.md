@@ -111,24 +111,28 @@ lib/
 | **Hasil ai assistant (`flutter analyze`)** | ![Flutter Analyze](screenshots/percobaan_chat.jpeg) |
 ## Refleksi 
 
-Pertanyaan 1: Mengapa penting untuk menyimpan API Key di file .env dan meletakkannya pada .gitignore?
-Jawaban:
-Mengamankan API Key sangat krusial karena API Key berfungsi sebagai kredensial autentikasi untuk mengakses layanan Gemini API. Jika API Key ditulis secara hardcode di dalam kode sumber (misalnya main.dart) dan terunggah ke repositori publik seperti GitHub, pihak yang tidak bertanggung jawab dapat mengambil dan menggunakan API Key tersebut. Hal ini dapat mengakibatkan penyalahgunaan kuota API, lonjakan biaya layanan (jika terhubung ke billing), hingga pemblokiran akun oleh penyedia layanan. Menaruhnya di file .env dan menyertakannya di .gitignore memastikan kredensial tetap aman di lingkungan lokal pengembang.
+1. **Fitur AI mana yang Anda integrasikan dan mengapa?**
 
-Pertanyaan 2: Bagaimana cara penanganan state (loading, sukses, error) saat melakukan pemanggilan API asinkron pada fitur AI di Flutter?
-Jawaban:
-Pemanggilan Gemini API bersifat asinkron (async/await), sehingga antarmuka pengguna (UI) harus responsif terhadap perubahan status (state):
+Jawaban: Fitur AI yang diintegrasikan adalah pemrosesan teks berbasis LLM menggunakan SDK Google Generative AI (gemini-1.5-flash) untuk membuat conversational chat assistant. Model versi flash dipilih karena memiliki kecepatan respon (latency) yang sangat tinggi, konsumsi daya/sumber daya yang efisien untuk perangkat mobile, serta biaya operasional API yang jauh lebih ekonomis dibanding model yang lebih besar.
 
-State Loading: Saat request dikirimkan ke model AI, variabel indikator loading (atau AsyncValue.loading() pada Riverpod) diaktifkan untuk menampilkan CircularProgressIndicator dan menonaktifkan tombol input agar tidak terjadi double submit.
+2. **Bagaimana Anda melindungi privasi pengguna saat menggunakan AI API?**
 
-State Sukses: Setelah response diterima dari model Gemini, data hasil teks diekstrak, disimpan ke dalam variabel state / daftar percakapan, lalu UI diperbarui (setState atau merefresh provider) untuk menampilkan jawaban.
+Jawaban: Perlindungan privasi dilakukan melalui dua sisi:
 
-State Error: Jika terjadi kegagalan jaringan atau kuota habis, blok try-catch akan menangkap exception dan memperbarui UI dengan pesan kesalahan yang informatif tanpa membuat aplikasi mengalami crash.
+Keamanan Kredensial: Mengamankan GEMINI_API_KEY menggunakan file .env dan mendaftarkannya ke .gitignore agar kunci API tidak terekspos ke publik/repositori Git.
 
-Pertanyaan 3: Apa perbedaan utama antara penggunaan model standar (misalnya gemini-1.5-flash) dengan model lainnya dalam pengintegrasian SDK Generative AI di Flutter?
-Jawaban:
-Perbedaan utamanya terletak pada kecepatan respons (latency), kapasitas konteks (token window), dan kemampuan pemrosesan multimodal:
+Minimalisasi Data: Hanya mengirimi prompt/pertanyaan teks yang dimasukkan oleh pengguna secara eksplisit ke endpoint Gemini API tanpa menyertakan data sensitif pengguna (seperti identitas perangkat, lokasi, atau informasi pribadi).
 
-gemini-1.5-flash dioptimalkan untuk kecepatan dan efisiensi biaya/sumber daya, sangat cocok digunakan pada aplikasi mobile yang membutuhkan respon teks cepat (real-time chat).
+3. **Fallback apa yang Anda sediakan jika layanan AI error?**
 
-Model yang lebih besar seperti gemini-1.5-pro memiliki penalaran (reasoning) yang lebih mendalam serta mendukung input dokumen/multimodal yang lebih kompleks, namun memiliki latency yang sedikit lebih tinggi dibanding versi flash.
+Jawaban: Aplikasi menerapkan mekanisme penanganan kesalahan (error handling) bertingkat menggunakan blok try-catch:
+
+Menampilkan pesan kesalahan (error message) yang informatif dan ramah pengguna via UI (seperti SnackBar atau tampilan error state) daripada membiarkan aplikasi crash.
+
+Menyediakan tombol Coba Lagi (Retry) untuk memicu pemanggilan ulang API ketika terjadi masalah koneksi internet atau rate limit.
+
+Memastikan state loading langsung dimatikan kembali saat error terjadi agar input teks pengguna tidak terkunci.
+
+4. **Satu hal yang Anda pelajari tentang UX fitur AI di mobile?**
+
+Jawaban: Hal paling berharga yang dipelajari adalah pentingnya memberikan umpan balik visual (visual feedback) seketika karena respon AI membutuhkan waktu beberapa detik (latency). Menggunakan indikator loading (atau streaming response) dan menonaktifkan tombol kirim saat proses berlangsung sangat penting agar pengguna tahu aplikasi sedang bekerja dan mencegah pengguna menekan tombol berulang kali (double submission).
