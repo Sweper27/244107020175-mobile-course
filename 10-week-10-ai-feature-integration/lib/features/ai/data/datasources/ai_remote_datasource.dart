@@ -21,7 +21,7 @@ class AIRemoteDataSourceImpl implements AIRemoteDataSource {
     }
 
     model = GenerativeModel(
-      model: 'gemini-1.5-flash-latest',
+      model: 'gemini-3.8-flash',
       apiKey: apiKey,
     );
     return model!;
