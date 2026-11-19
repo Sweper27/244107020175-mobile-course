@@ -1,0 +1,177 @@
+import 'dart:developer' as developer;
+
+import 'package:dio/dio.dart';
+
+import '../../../../core/config/env_config.dart';
+import '../../domain/repositories/auth_repository.dart';
+import 'token_store.dart';
+
+/// Dio HTTP client with automatic Authorization header injection
+/// and token refresh interceptor.
+class ApiClient {
+  ApiClient({
+    required this.tokenStore,
+    required this.authRepository,
+    required this.onSessionExpired,
+    String? baseUrl,
+  }) {
+    _dio = Dio(
+      BaseOptions(
+        // Konfigurasi terpusat: nilai diambil dari `.env` (JS 12).
+        baseUrl: baseUrl ?? EnvConfig.apiBaseUrl,
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
+      ),
+    );
+
+    _dio.interceptors.addAll([
+      _DioCacheInterceptor(),
+      _AuthInterceptor(
+        tokenStore: tokenStore,
+        authRepository: authRepository,
+        onSessionExpired: onSessionExpired,
+        dio: _dio,
+      ),
+    ]);
+  }
+
+  final TokenStore tokenStore;
+  final AuthRepository authRepository;
+  final Future<void> Function() onSessionExpired;
+
+  late final Dio _dio;
+
+  Dio get dio => _dio;
+}
+
+class _AuthInterceptor extends Interceptor {
+  _AuthInterceptor({
+    required this.tokenStore,
+    required this.authRepository,
+    required this.onSessionExpired,
+    required this.dio,
+  });
+
+  final TokenStore tokenStore;
+  final AuthRepository authRepository;
+  final Future<void> Function() onSessionExpired;
+  final Dio dio;
+
+  bool _isRefreshing = false;
+
+  @override
+  Future<void> onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
+    final accessToken = await tokenStore.readAccess();
+    if (accessToken != null && accessToken.isNotEmpty) {
+      options.headers['Authorization'] = 'Bearer $accessToken';
+    }
+    handler.next(options);
+  }
+
+  @override
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
+    if (err.response?.statusCode == 401 && !_isRefreshing) {
+      _isRefreshing = true;
+
+      try {
+        final result = await authRepository.refreshToken();
+
+        if (result.refreshed) {
+          // Retry original request with new token
+          final newAccessToken = await tokenStore.readAccess();
+          final options = err.requestOptions;
+          options.headers['Authorization'] = 'Bearer $newAccessToken';
+
+          final response = await dio.fetch(options);
+          _isRefreshing = false;
+          return handler.resolve(response);
+        } else {
+          _isRefreshing = false;
+          developer.log(
+            'Session expired, triggering logout callback',
+            name: 'ApiClient',
+          );
+          await onSessionExpired();
+          return handler.reject(err);
+        }
+      } catch (e) {
+        _isRefreshing = false;
+        developer.log('Error refreshing token: $e', name: 'ApiClient');
+        await onSessionExpired();
+        return handler.reject(err);
+      }
+    }
+
+    handler.next(err);
+  }
+}
+
+/// Network Optimization: In-memory cache interceptor for idempotent GET requests.
+/// Implements cache hit response and offline fallback.
+class _DioCacheInterceptor extends Interceptor {
+  final Map<String, Response> _cache = {};
+
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    if (options.method.toUpperCase() == 'GET') {
+      final cacheKey = options.uri.toString();
+      final cachedResponse = _cache[cacheKey];
+
+      if (cachedResponse != null) {
+        // Cache Hit: Resolve immediately without network roundtrip
+        developer.log('Network Cache Hit: $cacheKey', name: 'DioCache');
+        return handler.resolve(
+          Response(
+            requestOptions: options,
+            data: cachedResponse.data,
+            statusCode: 200,
+            statusMessage: 'OK (From Local Cache)',
+          ),
+        );
+      }
+    } else {
+      // Invalidate cache on mutations (POST, PUT, DELETE)
+      _cache.clear();
+    }
+    handler.next(options);
+  }
+
+  @override
+  void onResponse(Response response, ResponseInterceptorHandler handler) {
+    if (response.requestOptions.method.toUpperCase() == 'GET' &&
+        response.statusCode != null &&
+        response.statusCode! >= 200 &&
+        response.statusCode! < 300) {
+      final cacheKey = response.requestOptions.uri.toString();
+      _cache[cacheKey] = response;
+    }
+    handler.next(response);
+  }
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    // Fallback: If network fails on GET, try serving stale cache if available
+    if (err.requestOptions.method.toUpperCase() == 'GET') {
+      final cacheKey = err.requestOptions.uri.toString();
+      final cachedResponse = _cache[cacheKey];
+      if (cachedResponse != null) {
+        developer.log('Network Error, falling back to cache: $cacheKey', name: 'DioCache');
+        return handler.resolve(
+          Response(
+            requestOptions: err.requestOptions,
+            data: cachedResponse.data,
+            statusCode: 200,
+            statusMessage: 'OK (Offline Cache Fallback)',
+          ),
+        );
+      }
+    }
+    handler.next(err);
+  }
+}
